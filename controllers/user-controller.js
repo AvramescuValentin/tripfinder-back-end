@@ -51,6 +51,7 @@ const getUsers = (req, res, next) => {
     res.json({users: DUMMY_USERS});
 };
 
+
 const signup = (req, res, next) => {
     const {email, password} = req.body;
 

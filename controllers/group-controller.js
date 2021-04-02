@@ -1,4 +1,7 @@
-const HttpError = require('../models/http-error')
+const {validationResult} = require('express-validator');
+
+const HttpError = require('../models/http-error');
+
 
 let DUMMY_GROUPS = [
     {
@@ -48,6 +51,13 @@ const getGroupsByUserId = (req, res, next) => {
 };
 
 const createGroup = (req, res, next) => {
+    console.log('Creating new group!');
+    const errors = validationResult(req); // valideaza componentele din req inainte de a trece mai departe si returneaza erori
+    if(!errors.isEmpty()){ // daca nu e gol, i.e. exista erori, vom da throw la o eroare http
+       console.log(errors);
+        throw new HttpError('Invalid inputs passed, please check your data.', 422);
+    }
+
     const {title, description, location, tags, creator} = req.body;
     const createdGroup = {
         title,
@@ -60,6 +70,8 @@ const createGroup = (req, res, next) => {
     DUMMY_GROUPS.push(createdGroup);
 
     res.status(201).json({group: createdGroup});
+
+    console.log('New group created!');
 };
 
 const updateGroup = (req, res, next) => {

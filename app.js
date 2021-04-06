@@ -1,7 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 
-const HttpError =require('./models/http-error');
+const HttpError = require('./models/http-error');
 const groupRoutes = require('./routes/group-routes');
 const userRoutes = require('./routes/user-routes')
 
@@ -10,24 +11,32 @@ const app = express();
 
 app.use(bodyParser.json());
 
-app.use('/api/groups', groupRoutes);
+app.use('/api/group', groupRoutes);
 
 app.use('/api/user', userRoutes);
 
-app.use((req, res, next)=>{
+app.use((req, res, next) => {
     const error = new HttpError('Could not find this route', 404);
     throw error;
 });
 
-app.use((error,req, res, next) => {
+app.use((error, req, res, next) => {
     console.log("eror" + error);
-    if(res.headerSent){
+    if (res.headerSent) {
         return next(error);
     }
     res.status(error.code || 500);
     res.json({message: error.message || "An unknown error occured"});
 });
 
-app.listen(port, () => {
-    console.log("Server is listening on port 5000!");
-});
+mongoose
+    .connect(`mongodb+srv://cutremurMaster:uKd0Y8VeFsfatGLb@cluster0.ubaud.mongodb.net/TripFinder?retryWrites=true&w=majority`, {useNewUrlParser: true, useUnifiedTopology: true})
+    .then(()=>{ // daca am reusit sa ne connectam la baza de date pornim si serverul
+        app.listen(port, () => {
+            console.log("Server is listening on port 5000!");
+        });
+    })
+    .catch(err => {
+        console.log(err); //altfel vom returna o eroare
+    });
+

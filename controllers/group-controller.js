@@ -1,99 +1,117 @@
 const {validationResult} = require('express-validator');
 
 const HttpError = require('../models/http-error');
+const Group = require('../models/group')
 
 
-let DUMMY_GROUPS = [
-    {
-        id: 'g1',
-        title: 'praga',
-        description: 'cold beer',
-        location: 'cehia',
-        tags: [{tag: 'pls'}, {tag: 'mergi'}],
-        creator: 'u1'
-    },
-    {
-        id: 'g2',
-        title: 'asdasf',
-        description: 'cold beer',
-        location: 'cehia',
-        tags: [{tag: 'pls'}, {tag: 'mergi2'}],
-        creator: 'u1'
+const getGroupById = async (req, res, next) => {
+    const groupId = req.params.pid;
+    let group;
+    try {
+        group = await Group.findById(groupId);
+    } catch (err) {
+        const error = new HttpError('Something went wrong. Could not find place', 500);
+        return next(error);
     }
-];
+    ;
 
-const getGroupById = (req, res, next) => {
-    const placeId = req.params.pid;
-    const group = DUMMY_GROUPS.find(g => {
-        return g.id === placeId;
-    });
 
     if (!group) {
         return next(new HttpError('Could not find a group with this id', 404));
     }
 
-    res.json(group);
+    res.status(201).json({group: group.toObject({getters: true})});
 };
 
-const getGroupsByUserId = (req, res, next) => {
+const getGroupsByUserId = async (req, res, next) => {
     const userId = req.params.uid;
+    let group;
+    try {
+        group = await Group.find({creator: userId});
+        console.log(group);
+    } catch (err) {
+        const error = new HttpError('Fetching groups failed. Please try again later.', 500);
+        return next(error);
+    }
+    ;
 
-    const group = DUMMY_GROUPS.filter(p => {
-        return p.creator === userId;
-    });
-
-    if (!group.length) {
-
+    if (group.length === 0 || !group) {
         return next(new HttpError('Could not find a group with provided user id', 404));
     }
 
-    res.json(group);
+    res.status(201).json({group: group.map(group => group.toObject({getters: true}))});
 };
 
-const createGroup = (req, res, next) => {
+const createGroup = async (req, res, next) => {
     console.log('Creating new group!');
     const errors = validationResult(req); // valideaza componentele din req inainte de a trece mai departe si returneaza erori
-    if(!errors.isEmpty()){ // daca nu e gol, i.e. exista erori, vom da throw la o eroare http
-       console.log(errors);
-        throw new HttpError('Invalid inputs passed, please check your data.', 422);
+    if (!errors.isEmpty()) { // daca nu e gol, i.e. exista erori, vom da throw la o eroare http
+        console.log(errors);
+        return next(new HttpError('Invalid inputs passed, please check your data.', 422));
     }
 
-    const {title, description, location, tags, creator} = req.body;
-    const createdGroup = {
+    const {title, description, image, location, tags, creator} = req.body;
+    const createdGroup = new Group({
         title,
         description,
+        image: 'https://static.rentcars.com/imagens/modules/localidade/about/983-desktop-location-description.png',
         location,
         tags,
         creator
-    };
+    });
 
-    DUMMY_GROUPS.push(createdGroup);
+    try {
+        await createdGroup.save();
+    } catch (err) {
+        const error = new HttpError('Creating a new group failed. Please try again', 500);
+        return next(error); // o folosim ca sa oprim executia in caz ca intervine o eroare
+        //altfel executia va continua chiar daca primim o eroare.
+    }
+    ;
+
 
     res.status(201).json({group: createdGroup});
 
     console.log('New group created!');
 };
 
-const updateGroup = (req, res, next) => {
+const updateGroup = async (req, res, next) => {
     const {title, description} = req.body;
     const groupId = req.params.pid;
+    let group;
+    try {
+        group = await Group.findById(groupId);
+    } catch (err) {
+        const error = HttpError('Something went wrong. Please try again later', 500);
+        return next(error);
+    }
 
-    const updatedGroup = {...DUMMY_GROUPS.find(p => p.id === groupId)};
-    const groupIndex = DUMMY_GROUPS.findIndex(p => p.id === groupId);
-    updatedGroup.title = title;
-    updatedGroup.description = description;
-    console.log(updatedGroup);
+    group.title = title;
+    group.description = description;
 
+    try {
+        await group.save();
+    } catch (err) {
+        const error = new HttpError('Something went wrong. Please try again later', 500);
+        return next(error);
+    }
 
-    DUMMY_GROUPS[groupIndex] = updatedGroup;
-    console.log(DUMMY_GROUPS);
-
-    res.status(200).json({group: updatedGroup});
+    res.status(200).json({group: group.toObject({getters: true})});
 };
 
-const deleteGroup = (req, res, next) => {
+const deleteGroup = async (req, res, next) => {
+    console.log("Sterge");
     const groupId = req.params.pid;
-    DUMMY_GROUPS = DUMMY_GROUPS.filter(p => p.id !== groupId);
+    console.log(groupId);
+    let group;
+    try{
+        group = await Group.findById(groupId);
+        await group.remove();
+    }catch (err){
+        const error = new HttpError('Something went wrong. Please try again later', 500);
+        return next(error);
+    }
+
     res.status(200).json({message: "data deleted!"});
 };
 

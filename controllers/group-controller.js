@@ -78,6 +78,7 @@ const createGroup = async (req, res, next) => {
 const updateGroup = async (req, res, next) => {
     const {title, description} = req.body;
     const groupId = req.params.pid;
+
     let group;
     try {
         group = await Group.findById(groupId);

@@ -8,7 +8,8 @@ const groupSchema = new Schema({
     image: {type: String},
     location: {type: String, required: true},
     tags: [String],
-    creator: {type: String, required: true}
+    creator: {type: String, required: true},
+    members:[String]
 
 })
 

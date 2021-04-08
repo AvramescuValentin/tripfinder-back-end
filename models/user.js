@@ -10,7 +10,7 @@ const userSchema = new Schema({
     email: {type: String, required: true, unique: true},
     password: {type:String, required:true, minlength: 6},
     image:{type:String},
-    groups: [String],
+    groups: [{type: mongoose.Types.ObjectId, ref:'Group'}],
     gender: {type:String, required:true},
     country: {type:String, required:true},
     dateOfBirth:{type:Date, required:true},

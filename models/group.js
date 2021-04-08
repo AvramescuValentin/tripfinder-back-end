@@ -8,8 +8,9 @@ const groupSchema = new Schema({
     image: {type: String},
     location: {type: String, required: true},
     tags: [String],
-    creator: {type: String, required: true},
-    members:[String]
+    tripDate: {type:Date, required:true},
+    creator: {type: mongoose.Types.ObjectId, required: true, ref: 'User'},
+    members:[{type: mongoose.Types.ObjectId, ref: 'User'}]
 
 })
 

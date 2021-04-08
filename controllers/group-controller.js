@@ -1,7 +1,9 @@
 const {validationResult} = require('express-validator');
 
 const HttpError = require('../models/http-error');
-const Group = require('../models/group')
+const Group = require('../models/group');
+const User = require('../models/user');
+const mongoose = require("mongoose");
 
 
 const getGroupById = async (req, res, next) => {
@@ -43,13 +45,13 @@ const getGroupsByUserId = async (req, res, next) => {
 };
 
 const createGroup = async (req, res, next) => {
-    console.log('Creating new group!');
+    let user;
     const errors = validationResult(req); // valideaza componentele din req inainte de a trece mai departe si returneaza erori
     if (!errors.isEmpty()) { // daca nu e gol, i.e. exista erori, vom da throw la o eroare http
         console.log(errors);
         return next(new HttpError('Invalid inputs passed, please check your data.', 422));
     }
-
+    console.log("Luam din body");
     const {title, description, image, location, tags, creator} = req.body;
     const createdGroup = new Group({
         title,
@@ -57,13 +59,42 @@ const createGroup = async (req, res, next) => {
         image: 'https://static.rentcars.com/imagens/modules/localidade/about/983-desktop-location-description.png',
         location,
         tags,
-        creator
+        creator,
+        members: creator
     });
+    console.log("Avem din body");
+    console.log(createdGroup);
 
     try {
-        await createdGroup.save();
+        user = await User.findById(creator);
+    } catch (err) {
+        const error = new HttpError('Creating group failed. Please try again later.', 500);
+        return next(error);
+    }
+    console.log("creator");
+    console.log(user);
+
+    if (!user) {
+        const error = new HttpError('Could not find user for provided ID', 404);
+        return next(error);
+    }
+
+    try {
+        // await createdGroup.save();
+        const sess = await mongoose.startSession();
+        sess.startTransaction();
+        console.log("Am inceput tranzactia");
+        await createdGroup.save({session: sess}); //aici am stocat temporar grupul
+        console.log("Am salvat grupul");
+        user.groups.push(createdGroup);
+        console.log("Am adaugat grupul la user");
+        await user.save({session: sess});
+        console.log("Am salvat userul");
+        await sess.commitTransaction(); // aici se salveaza tot. Daca ceva merge prost pana aici, se da drop automat
+        console.log("Am dat commit");
     } catch (err) {
         const error = new HttpError('Creating a new group failed. Please try again', 500);
+        console.log(err);
         return next(error); // o folosim ca sa oprim executia in caz ca intervine o eroare
         //altfel executia va continua chiar daca primim o eroare.
     }
@@ -101,18 +132,32 @@ const updateGroup = async (req, res, next) => {
 };
 
 const deleteGroup = async (req, res, next) => {
-    console.log("Sterge");
     const groupId = req.params.pid;
-    console.log(groupId);
     let group;
-    try{
-        group = await Group.findById(groupId);
-        await group.remove();
-    }catch (err){
+    try {
+        group = await Group.findById(groupId).populate('creator');
+    } catch (err) {
         const error = new HttpError('Something went wrong. Please try again later', 500);
         return next(error);
     }
 
+    if (!group) {
+        const error = new HttpError("We could not found any group with this ID", 404);
+        return next(error);
+    }
+
+    try {
+        const sess = await mongoose.startSession();
+        sess.startTransaction();
+        await group.remove({session: sess});
+        group.creator.groups.pull(group);
+        await group.creator.save({session: sess});
+        await sess.commitTransaction();
+    } catch (err) {
+        console.log(err);
+        const error = new HttpError('Could not delete the group now. Please try again later', 500);
+        return next(error);
+    }
     res.status(200).json({message: "data deleted!"});
 };
 

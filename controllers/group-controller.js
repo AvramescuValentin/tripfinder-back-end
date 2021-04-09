@@ -83,15 +83,10 @@ const createGroup = async (req, res, next) => {
         // await createdGroup.save();
         const sess = await mongoose.startSession();
         sess.startTransaction();
-        console.log("Am inceput tranzactia");
         await createdGroup.save({session: sess}); //aici am stocat temporar grupul
-        console.log("Am salvat grupul");
         user.groups.push(createdGroup);
-        console.log("Am adaugat grupul la user");
         await user.save({session: sess});
-        console.log("Am salvat userul");
         await sess.commitTransaction(); // aici se salveaza tot. Daca ceva merge prost pana aici, se da drop automat
-        console.log("Am dat commit");
     } catch (err) {
         const error = new HttpError('Creating a new group failed. Please try again', 500);
         console.log(err);

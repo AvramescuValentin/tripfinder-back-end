@@ -7,7 +7,7 @@ const groupSchema = new Schema({
     description: {type: String, required: true},
     image: {type: String},
     location: {type: String, required: true},
-    tags: [String],
+    tags: [{type: mongoose.Types.ObjectId, ref: 'Tags'}],
     tripDate: {type:Date, required:true},
     creator: {type: mongoose.Types.ObjectId, required: true, ref: 'User'},
     members:[{type: mongoose.Types.ObjectId, ref: 'User'}]

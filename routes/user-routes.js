@@ -5,16 +5,21 @@ const userControllers = require('../controllers/user-controller');
 
 const router = express.Router();
 
-router.get('/', [
-        check('email').not().isEmpty(),
-        check('password').isLength({min: 5}),
-        check('username').notEmpty()
-    ],
-    userControllers.getUser);
+router.get('/user/search/:name', userControllers.getUser);
 
-router.post('/signup', userControllers.signup);
+router.get('/user/:uid', userControllers.getUserById);
+
+router.post('/signup',[
+    check('firstName').notEmpty(),
+    check('lastName').notEmpty(),
+    check('username').notEmpty(),
+    check('email').isEmail(),
+    check('password').isLength({min: 6}),
+    check('gender').notEmpty(),
+    check('location').notEmpty(),
+    check('dateOfBirth').notEmpty()
+], userControllers.signup);
 
 router.post('/login', userControllers.login);
-
 
 module.exports = router;

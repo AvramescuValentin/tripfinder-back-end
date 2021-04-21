@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -29,9 +30,13 @@ app.use((error, req, res, next) => {
     res.json({message: error.message || "An unknown error occured"});
 });
 
+
 mongoose
-    .connect(`mongodb+srv://cutremurMaster:uKd0Y8VeFsfatGLb@cluster0.ubaud.mongodb.net/TripFinder?retryWrites=true&w=majority`, {useNewUrlParser: true, useUnifiedTopology: true})
-    .then(()=>{ // daca am reusit sa ne connectam la baza de date pornim si serverul
+    .connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ubaud.mongodb.net/TripFinder?retryWrites=true&w=majority`, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    })
+    .then(() => { // daca am reusit sa ne connectam la baza de date pornim si serverul
         app.listen(port, () => {
             console.log("Server is listening on port 5000!");
         });

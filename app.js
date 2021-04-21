@@ -32,7 +32,7 @@ app.use((error, req, res, next) => {
 
 
 mongoose
-    .connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ubaud.mongodb.net/TripFinder?retryWrites=true&w=majority`, {
+    .connect(process.env.DB_LINK, {
         useNewUrlParser: true,
         useUnifiedTopology: true
     })

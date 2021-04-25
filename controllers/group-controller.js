@@ -52,14 +52,15 @@ const createGroup = async (req, res, next) => {
         return next(new HttpError('Invalid inputs passed, please check your data.', 422));
     }
     console.log("Luam din body");
-    const {title, description, image, location, tags, creator} = req.body;
+    const {title, description, image, location, tags, tripDate, creator} = req.body;
     const createdGroup = new Group({
         title,
         description,
         image: 'https://static.rentcars.com/imagens/modules/localidade/about/983-desktop-location-description.png',
         location,
-        tags,
+        // tags,
         creator,
+        tripDate,
         members: creator
     });
     console.log("Avem din body");
@@ -88,8 +89,8 @@ const createGroup = async (req, res, next) => {
         await user.save({session: sess});
         await sess.commitTransaction(); // aici se salveaza tot. Daca ceva merge prost pana aici, se da drop automat
     } catch (err) {
-        const error = new HttpError('Creating a new group failed. Please try again', 500);
         console.log(err);
+        const error = new HttpError('Creating a new group failed. Please try again', 500);
         return next(error); // o folosim ca sa oprim executia in caz ca intervine o eroare
         //altfel executia va continua chiar daca primim o eroare.
     }

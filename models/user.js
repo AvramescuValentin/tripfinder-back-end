@@ -8,15 +8,15 @@ const userSchema = new Schema({
     lastName: {type: String, required: true},
     username: {type: String, required: true, unique: true},
     email: {type: String, required: true, unique: true},
-    password: {type:String, required:true, minlength: 6},
-    gender: {type:mongoose.Types.ObjectId, ref:'Gender', required:true},
-    image:{type:String, default:'https://avpn.asia/wp-content/uploads/2015/05/empty_profile.png'},
-    groups: [{type: mongoose.Types.ObjectId, ref:'Group'}],
-    location: {type:mongoose.Types.ObjectId, ref:'Location', required:true},
-    dateOfBirth:{type:Date, required:true},
-    tags:[{type: mongoose.Types.ObjectId, ref:'Tags'}],
-    rating:Number,
-    review:[{star:Number, commentary:String}]
+    password: {type: String, required: true, minlength: 6},
+    gender: {type: mongoose.Types.ObjectId, ref: 'Gender', required:true},
+    image: {type: String, default: 'https://avpn.asia/wp-content/uploads/2015/05/empty_profile.png'},
+    groups: [{type: mongoose.Types.ObjectId, ref: 'Group'}],
+    location: {type: mongoose.Types.ObjectId, ref: 'Location', required: true},
+    dateOfBirth: {type: Date, required: true},
+    tags: [{type: mongoose.Types.ObjectId, ref: 'Tags'}],
+    rating: Number,
+    review: [{star: Number, commentary: String}]
 });
 
 userSchema.plugin(uniqueValidator);

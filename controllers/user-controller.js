@@ -1,9 +1,13 @@
 const {validationResult} = require('express-validator');
+const mongoose = require('mongoose');
 
 const HttpError = require('../models/http-error');
 const User = require('../models/user');
-const Tags = require('../models/tags');
 const Gender = require('../models/gender');
+// const Location = require('../models/location');
+// const Tags = require('../models/tags');
+const locationService = require('../data_service/location-service');
+const tagService = require('../data_service/tags-service');
 
 const getUsers = async (req, res, next) => {
     let name = req.params.name;
@@ -39,8 +43,7 @@ const signup = async (req, res, next) => {
     }
 
     const {firstName, lastName, username, email, password, gender, location, dateOfBirth, tags, image} = req.body;
-    let existingUser;
-    console.log(gender);
+    let existingUser, userGender, userLocation;
     try {
         existingUser = await User.findOne({email: email});
     } catch (err) {
@@ -54,30 +57,44 @@ const signup = async (req, res, next) => {
     }
     ;
 
-    try{
-        
-    }catch (err){}
-
-    const createdUser = new User({
-        firstName,
-        lastName,
-        username,
-        email,
-        password,
-        gender,
-        image,
-        location,
-        dateOfBirth,
-        tags
-    });
     try {
-        await createdUser.save();
+        userGender = await Gender.findOne({value: gender});
+    } catch (err) {
+        const error = new HttpError("Could not find the gender.", 500);
+        return next(error);
+    }
+
+    try {
+        const sess = await mongoose.startSession();
+        sess.startTransaction();
+        const userLocation = await locationService.searchCreateLocation(location, sess);
+
+        console.log(` firstName:${firstName} lastName:${lastName} username:${username} email:${email} password:${password} gender:${userGender} image:${image} location:${userLocation} dateOfBirth:${dateOfBirth} tags:${tags}`);
+        const createdUser = new User({
+            firstName,
+            lastName,
+            username,
+            email,
+            password,
+            gender:userGender,
+            image,
+            location:userLocation,
+            dateOfBirth,
+            // tags:userTags
+        });
+        console.log(createdUser);
+        await tagService.searchCreateTags(tags, createdUser, sess);
+        await createdUser.save({session:sess});
+        await sess.commitTransaction();
+
+
     } catch (err) {
         console.log(err);
         const error = new HttpError('Creating a new user failed. Please try again later', 500);
         return next(error);
     }
-    res.status(201).json({user: createdUser.toObject({getters: true})});
+
+    res.status(201).json({status: "User registered"});
 };
 
 const login = async (req, res, next) => {

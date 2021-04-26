@@ -1,9 +1,11 @@
 const {validationResult} = require('express-validator');
+const mongoose = require("mongoose");
 
 const HttpError = require('../models/http-error');
 const Group = require('../models/group');
 const User = require('../models/user');
-const mongoose = require("mongoose");
+const locationService = require('../data_service/location-service');
+const tagService = require('../data_service/tags-service');
 
 
 const getGroupById = async (req, res, next) => {
@@ -51,20 +53,19 @@ const createGroup = async (req, res, next) => {
         console.log(errors);
         return next(new HttpError('Invalid inputs passed, please check your data.', 422));
     }
-    console.log("Luam din body");
     const {title, description, image, location, tags, tripDate, creator} = req.body;
-    const createdGroup = new Group({
-        title,
-        description,
-        image: 'https://static.rentcars.com/imagens/modules/localidade/about/983-desktop-location-description.png',
-        location,
-        // tags,
-        creator,
-        tripDate,
-        members: creator
-    });
-    console.log("Avem din body");
-    console.log(createdGroup);
+    // const createdGroup = new Group({
+    //     title,
+    //     description,
+    //     image,
+    //     location,
+    //     tags,
+    //     creator,
+    //     tripDate,
+    //     members: creator
+    // });
+    // console.log("Avem din body");
+    // console.log(createdGroup);
 
     try {
         user = await User.findById(creator);
@@ -72,9 +73,6 @@ const createGroup = async (req, res, next) => {
         const error = new HttpError('Creating group failed. Please try again later.', 500);
         return next(error);
     }
-    console.log("creator");
-    console.log(user);
-
     if (!user) {
         const error = new HttpError('Could not find user for provided ID', 404);
         return next(error);
@@ -84,6 +82,18 @@ const createGroup = async (req, res, next) => {
         // await createdGroup.save();
         const sess = await mongoose.startSession();
         sess.startTransaction();
+        const groupLocation = await locationService.searchCreateLocation(location, sess);
+        const createdGroup = new Group({
+            title,
+            description,
+            image,
+            location:groupLocation,
+            // tags,
+            creator:user,
+            tripDate,
+            // members: creator
+        });
+        await tagService.searchCreateTags(tags,createdGroup,sess);
         await createdGroup.save({session: sess}); //aici am stocat temporar grupul
         user.groups.push(createdGroup);
         await user.save({session: sess});

@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const Tags = require('../models/tags');
 const User = require('../models/user');
 
-const searchCreateTags = async (obj, user, sess) => { // obj is an array of strings
+const searchCreateTags = async (obj, target, sess) => { // obj is an array of strings
     console.log(obj);
     // console.log(userId);
     // let user;
@@ -23,9 +23,9 @@ const searchCreateTags = async (obj, user, sess) => { // obj is an array of stri
                     value:obj[i]
                 })
                 await newTag.save({session:sess});
-                user.tags.push(newTag);
+                target.tags.push(newTag);
             } else {
-                user.tags.push(tag);
+                target.tags.push(tag);
             }
         }
     } catch (err) {

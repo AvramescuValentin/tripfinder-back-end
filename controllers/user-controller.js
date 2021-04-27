@@ -11,9 +11,14 @@ const tagService = require('../data_service/tags-service');
 
 const getUsers = async (req, res, next) => {
     let name = req.params.name;
+    console.log(name);
+    const regex = new RegExp(name, 'i');
     let users;
     try {
-        users = await User.find({fullName: name}, 'fullName image country rating');
+        const lastNameResults = await User.find({lastName:{$regex: regex}}, 'firstName lastName image location');
+        const firstNameResults = await User.find({firstName: {$regex: regex}}, 'firstName lastName image location');
+        console.log(firstNameResults);
+        users = lastNameResults.concat(firstNameResults);
     } catch (err) {
         const error = new HttpError('Something went worg. Please come again later', 500);
         return next(error);
@@ -23,14 +28,16 @@ const getUsers = async (req, res, next) => {
 };
 
 const getUserById = async (req, res, next) => {
+    const userId = req.params.uid;
+    console.log(userId);
     let users;
     try {
-        users = await User.find({}, 'email username');
+        users = await User.findById(userId, 'email username');
     } catch (err) {
         const error = new HttpError('Something went worg. Please come again later', 500);
         return next(error);
     }
-    res.json({users: users.map(user => user.toObject({getters: true}))});
+    res.json({users: users});
 
 };
 

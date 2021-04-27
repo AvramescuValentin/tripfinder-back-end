@@ -91,9 +91,10 @@ const createGroup = async (req, res, next) => {
             // tags,
             creator:user,
             tripDate,
-            // members: creator
+            // members
         });
         await tagService.searchCreateTags(tags,createdGroup,sess);
+        createdGroup.members.push(user);
         await createdGroup.save({session: sess}); //aici am stocat temporar grupul
         user.groups.push(createdGroup);
         await user.save({session: sess});
@@ -103,11 +104,12 @@ const createGroup = async (req, res, next) => {
         const error = new HttpError('Creating a new group failed. Please try again', 500);
         return next(error); // o folosim ca sa oprim executia in caz ca intervine o eroare
         //altfel executia va continua chiar daca primim o eroare.
+
     }
     ;
 
 
-    res.status(201).json({group: createdGroup});
+    res.status(201).json({status: "Group created with success!"});
 
     console.log('New group created!');
 };
